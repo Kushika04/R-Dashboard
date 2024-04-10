@@ -1,0 +1,123 @@
+---
+title: "Analysis of Growth of Indian Agriculture"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: row
+    vertical_layout: fill
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(readxl)
+library(tidyverse)
+library(plotly)
+library(ggmap)
+library(sqldf)
+library(shiny)
+library(dplyr)
+
+indag = read.csv("C:/Users/KUSHIKA/Desktop/R project/indian agriculture.csv")
+production = read.csv("C:/Users/KUSHIKA/Desktop/R project/production.csv")
+area = read.csv("C:/Users/KUSHIKA/Desktop/R project/area.csv")
+yield = read.csv("C:/Users/KUSHIKA/Desktop/R project/yield.csv")
+Categorical.Variables = c("YEAR", "STATE_NAME","DIST_NAME")
+Production.Variables = colnames(production)
+Area.Variables = colnames(area)
+Yield.Variables = colnames(yield)
+```
+
+Dashboard
+==================================
+
+Row {.sidebar}
+--------------------------------------------------------------------
+
+```{r}
+
+selectInput("categorical_variable", label = "Select Categorical Variable:", choices = Categorical.Variables)
+
+selectInput("production_variable", label = "Select Numeric Variable:", choices = Production.Variables)
+
+selectInput("area_variable", label = "Select Numeric Variable:", choices = Area.Variables)
+
+selectInput("yield_variable", label = "Select Numeric Variable:", choices = Yield.Variables)
+
+
+```
+
+Row {data-width = 150}
+----------------------------------------------------------------------
+
+### Total States
+```{r}
+total_states = sqldf("select count(distinct(STATE_NAME)) from indag")
+valueBox(value = total_states, icon = "fa-earth-asia",caption = "Total Staes",color = "green")
+```
+
+
+### Total Dist_Name
+```{r}
+total_dist = sqldf("select count(distinct(DIST_NAME)) from indag")
+valueBox(value = total_dist, icon = "fa-tree-city", caption = "Total Districts",color = "orange")
+```
+
+
+
+### Total_Year
+```{r}
+total_year = sqldf("select count(distinct(YEAR)) from indag")
+valueBox(value = total_year, icon = "fa-calendar-days", caption = "Total Year",color = "coral")
+
+```
+
+
+Row 
+--------------------------------------------------------------------
+
+### Production
+
+
+```{r}
+renderPlotly({
+  plot_ly(indag,
+          labels = ~indag[[input$categorical_variable]],
+          values = ~indag[[input$production_variable]],
+          type = "pie",
+          marker = list(colors = RColorBrewer::brewer.pal(8, "Set2")), textposition = 'inside') %>%
+    layout(title = "Production(1000 tons)",
+           showlegend = TRUE)
+})
+
+```
+
+### Area
+```{r}
+#Area
+
+renderPlotly({plot_ly(indag, x = ~indag[[input$categorical_variable]], y = ~indag[[input$area_variable]], type = "bar", marker = list(color = ~indag[[input$area_variable]])) %>%
+        layout(title = "Area(1000 ha)", xaxis = list(title = paste0(input$categorical_variable)), yaxis = list(title = paste0(input$area_variable)))
+
+})
+
+```
+
+Row
+------------------------------------
+
+### Yield 
+```{r}
+renderPlotly({
+  plot_ly(indag, 
+          y = ~indag[[input$categorical_variable]], 
+          x = ~indag[[input$yield_variable]], 
+          type = "bar", 
+          orientation = "h",  # Set orientation to horizontal
+          marker = list(color = '#336699')) %>%
+    layout(title = "Yield(Kg per ha)", 
+           yaxis = list(title = paste0(input$categorical_variable)), 
+           xaxis = list(title = "Yield"))
+})
+
+
+```
